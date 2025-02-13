@@ -41,8 +41,9 @@ public class PictureServiceImpl implements PictureService {
             String o = (String)map.get("murl");
             //取标题
             String title = element.select(".inflnk").get(0).attr("aria-label");
-            Picture p = new Picture(o,title);
+            Picture p = new Picture(title,o);
             Pictures.add(p);
+            //每次10条
             if(Pictures.size() >= pageSize){
                 break;
             }
