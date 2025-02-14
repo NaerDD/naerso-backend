@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.naer.model.dto.post.PostQueryRequest;
 import com.naer.model.entity.Post;
 import com.naer.model.vo.PostVO;
+import com.naer.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -58,4 +59,5 @@ public interface PostService extends IService<Post> {
      * @return
      */
     Page<PostVO> getPostVOPage(Page<Post> postPage, HttpServletRequest request);
+
 }

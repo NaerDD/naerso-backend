@@ -2,6 +2,7 @@ package com.naer.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.naer.common.ErrorCode;
 import com.naer.constant.CommonConstant;
@@ -269,5 +270,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public Page<UserVO> listUserVOByPage(UserQueryRequest userQueryRequest) {
+        int current = userQueryRequest.getCurrent();
+        int size = userQueryRequest.getPageSize();
+        //1.发起查询 拿到Page<User>
+        Page<User> userPage = this.page(new Page<>(current, size), this.getQueryWrapper(userQueryRequest));
+        //2.新建一个Page存储脱敏后的User   userPage.getTotal获取总数大小
+        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
+        //3.从1中拿数据-》脱敏-》存到  List<UserVO> userVO
+        List<UserVO> userVO = this.getUserVO(userPage.getRecords());
+        //4.将 List<UserVO> userVO直接存到2中新建的Page里
+        userVOPage.setRecords(userVO);
+        return userVOPage;
     }
 }

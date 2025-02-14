@@ -32,11 +32,10 @@ public class PictureController {
      * 分页获取列表（封装类）
      *
      * @param picturteQueryRequest
-     * @param request
      * @return
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<Picture>> listPostVOByPage(@RequestBody PicturteQueryRequest picturteQueryRequest, HttpServletRequest request) {
+    public BaseResponse<Page<Picture>> listPostVOByPage(@RequestBody PicturteQueryRequest picturteQueryRequest) {
         long current = picturteQueryRequest.getCurrent();
         long size = picturteQueryRequest.getPageSize();
         // 限制爬虫
