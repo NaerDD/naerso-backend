@@ -1,8 +1,10 @@
 package com.naer.model.dto.search;
 
 import com.naer.common.PageRequest;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.io.Serializable;
 
