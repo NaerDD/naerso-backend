@@ -8,6 +8,7 @@ import com.naer.common.DeleteRequest;
 import com.naer.common.ErrorCode;
 import com.naer.common.ResultUtils;
 import com.naer.constant.UserConstant;
+import com.naer.datasource.PostDataSource;
 import com.naer.exception.BusinessException;
 import com.naer.exception.ThrowUtils;
 import com.naer.model.dto.post.PostAddRequest;
@@ -21,6 +22,7 @@ import com.naer.service.PostService;
 import com.naer.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -43,6 +45,8 @@ public class PostController {
 
     @Resource
     private UserService userService;
+    @Autowired
+    private PostDataSource postDataSource;
 
     // region 增删改查
 
@@ -175,9 +179,12 @@ public class PostController {
                                                        HttpServletRequest request) {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
+        String searchText = postQueryRequest.getSearchText();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<PostVO> postVOPage = postService.listPostVOByPage(postQueryRequest, request);
+        // 调用 PostDataSource 的 doSearch 方法
+        Page<PostVO> postVOPage = postDataSource.doSearch(searchText,current,size);
+//        Page<PostVO> postVOPage = postService.listPostVOByPage(postQueryRequest, request);
         return ResultUtils.success(postVOPage);
     }
 

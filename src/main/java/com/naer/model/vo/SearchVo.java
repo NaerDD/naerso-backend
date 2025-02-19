@@ -1,11 +1,9 @@
 package com.naer.model.vo;
 
-import com.google.gson.Gson;
 import com.naer.model.entity.Picture;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,6 +20,8 @@ public class SearchVo implements Serializable {
     private List<PostVO> PostList;
 
     private List<Picture> PictureVOList;
+
+    private List<?> DataList;
 
     private static final long serialVersionUID = 1L;
 }
