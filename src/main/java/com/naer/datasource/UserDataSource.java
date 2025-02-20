@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * 用户服务实现 适配器模式
+ * 用户服务实现 ——适配器模式的体现
  * @author Naer
  */
 @Service

@@ -2,6 +2,7 @@ package com.naer.datasource;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.naer.model.dto.post.PostQueryRequest;
+import com.naer.model.entity.Post;
 import com.naer.model.vo.PostVO;
 import com.naer.service.PostService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 帖子服务实现
+ * 帖子服务实现  ——适配器模式的体现
  *
  * @author Naer
  * 
@@ -36,7 +37,9 @@ public class PostDataSource  implements DataSource<PostVO> {
         postQueryRequest.setSearchText(searchText);
         postQueryRequest.setCurrent((int)pageNum);
         postQueryRequest.setPageSize((int)pageSize);
-        return postService.listPostVOByPage(postQueryRequest,request);
+//        return postService.listPostVOByPage(postQueryRequest,request);
+        Page<Post> postPage = postService.searchFromEs(postQueryRequest);
+        return postService.getPostVOPage(postPage,request);
     }
 
 }
