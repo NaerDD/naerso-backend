@@ -127,6 +127,110 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return queryWrapper;
     }
 
+    /**
+     * ES搜索       配置Logstash的时候报错 https://blog.csdn.net/qq_52354698/article/details/134511954
+     * @param postQueryRequest
+     * @return
+     */
+//    @Override
+//    public Page<Post> searchFromEs(PostQueryRequest postQueryRequest) {
+//        Long id = postQueryRequest.getId();
+//        Long notId = postQueryRequest.getNotId();
+//        String searchText = postQueryRequest.getSearchText();
+//        String title = postQueryRequest.getTitle();
+//        String content = postQueryRequest.getContent();
+//        List<String> tagList = postQueryRequest.getTags();
+//        List<String> orTagList = postQueryRequest.getOrTags();
+//        Long userId = postQueryRequest.getUserId();
+//        // es 起始页为 0
+//        long current = postQueryRequest.getCurrent() - 1;
+//        long pageSize = postQueryRequest.getPageSize();
+//        String sortField = postQueryRequest.getSortField();
+//        String sortOrder = postQueryRequest.getSortOrder();
+//
+//        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+//        // 过滤
+//        boolQueryBuilder.filter(QueryBuilders.termQuery("isDelete", 0));
+//        if (id != null) {
+//            boolQueryBuilder.filter(QueryBuilders.termQuery("id", id));
+//        }
+//        if (notId != null) {
+//            boolQueryBuilder.mustNot(QueryBuilders.termQuery("id", notId));
+//        }
+//        if (userId != null) {
+//            boolQueryBuilder.filter(QueryBuilders.termQuery("userId", userId));
+//        }
+//        // 必须包含所有标签
+//        if (CollUtil.isNotEmpty(tagList)) {
+//            for (String tag : tagList) {
+//                boolQueryBuilder.filter(QueryBuilders.termQuery("tags", tag));
+//            }
+//        }
+//        // 包含任何一个标签即可
+//        if (CollUtil.isNotEmpty(orTagList)) {
+//            BoolQueryBuilder orTagBoolQueryBuilder = QueryBuilders.boolQuery();
+//            for (String tag : orTagList) {
+//                orTagBoolQueryBuilder.should(QueryBuilders.termQuery("tags", tag));
+//            }
+//            orTagBoolQueryBuilder.minimumShouldMatch(1);
+//            boolQueryBuilder.filter(orTagBoolQueryBuilder);
+//        }
+//        // 按关键词检索
+//        if (StringUtils.isNotBlank(searchText)) {
+//            boolQueryBuilder.should(QueryBuilders.matchQuery("title", searchText));
+//            boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
+//            boolQueryBuilder.minimumShouldMatch(1);
+//        }
+//        // 按标题检索
+//        if (StringUtils.isNotBlank(title)) {
+//            boolQueryBuilder.should(QueryBuilders.matchQuery("title", title));
+//            boolQueryBuilder.minimumShouldMatch(1);
+//        }
+//        // 按内容检索
+//        if (StringUtils.isNotBlank(content)) {
+//            boolQueryBuilder.should(QueryBuilders.matchQuery("content", content));
+//            boolQueryBuilder.minimumShouldMatch(1);
+//        }
+//        // 排序
+//        SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
+//        if (StringUtils.isNotBlank(sortField)) {
+//            sortBuilder = SortBuilders.fieldSort(sortField);
+//            sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
+//        }
+//        // 分页
+//        PageRequest pageRequest = PageRequest.of((int) current, (int) pageSize);
+//        // 构造查询
+//        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
+//                .withPageable(pageRequest).withSorts(sortBuilder).build();
+//        //将构造出来的查询条件交给ES去查询
+//        SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
+//        Page<Post> page = new Page<>();
+//        //返回的searchHits上 sugest
+//        page.setTotal(searchHits.getTotalHits());
+//        List<Post> resourceList = new ArrayList<>();
+//        // 查出结果后，从 db 获取最新动态数据（比如点赞数）
+//        if (searchHits.hasSearchHits()) {
+//            List<SearchHit<PostEsDTO>> searchHitList = searchHits.getSearchHits();
+//            List<Long> postIdList = searchHitList.stream().map(searchHit -> searchHit.getContent().getId())
+//                    .collect(Collectors.toList());
+//            List<Post> postList = baseMapper.selectBatchIds(postIdList);
+//            if (postList != null) {
+//                Map<Long, List<Post>> idPostMap = postList.stream().collect(Collectors.groupingBy(Post::getId));
+//                postIdList.forEach(postId -> {
+//                    if (idPostMap.containsKey(postId)) {
+//                        resourceList.add(idPostMap.get(postId).get(0));
+//                    } else {
+//                        // 从 es 清空 db 已物理删除的数据
+//                        String delete = elasticsearchRestTemplate.delete(String.valueOf(postId), PostEsDTO.class);
+//                        log.info("delete post {}", delete);
+//                    }
+//                });
+//            }
+//        }
+//        page.setRecords(resourceList);
+//        return page;
+//    }
+
     @Override
     public Page<Post> searchFromEs(PostQueryRequest postQueryRequest) {
         Long id = postQueryRequest.getId();
@@ -137,14 +241,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<String> tagList = postQueryRequest.getTags();
         List<String> orTagList = postQueryRequest.getOrTags();
         Long userId = postQueryRequest.getUserId();
-        // es 起始页为 0
+
         long current = postQueryRequest.getCurrent() - 1;
         long pageSize = postQueryRequest.getPageSize();
         String sortField = postQueryRequest.getSortField();
         String sortOrder = postQueryRequest.getSortOrder();
+
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        // 过滤
         boolQueryBuilder.filter(QueryBuilders.termQuery("isDelete", 0));
+
         if (id != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("id", id));
         }
@@ -154,12 +259,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (userId != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("userId", userId));
         }
+
         // 必须包含所有标签
         if (CollUtil.isNotEmpty(tagList)) {
             for (String tag : tagList) {
                 boolQueryBuilder.filter(QueryBuilders.termQuery("tags", tag));
             }
         }
+
         // 包含任何一个标签即可
         if (CollUtil.isNotEmpty(orTagList)) {
             BoolQueryBuilder orTagBoolQueryBuilder = QueryBuilders.boolQuery();
@@ -169,37 +276,59 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             orTagBoolQueryBuilder.minimumShouldMatch(1);
             boolQueryBuilder.filter(orTagBoolQueryBuilder);
         }
-        // 按关键词检索
+
+        // 按关键词检索，指定使用 ik_max_word 分词器
         if (StringUtils.isNotBlank(searchText)) {
-            boolQueryBuilder.should(QueryBuilders.matchQuery("title", searchText));
-            boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("title", searchText).analyzer("ik_max_word"));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText).analyzer("ik_max_word"));
             boolQueryBuilder.minimumShouldMatch(1);
+        }else{
+            //如果searchText为空，执行全查 正常前端应该上来就会执行一次空查 展示es中全部数据
+            boolQueryBuilder.should(QueryBuilders.matchAllQuery());
         }
+
         // 按标题检索
         if (StringUtils.isNotBlank(title)) {
-            boolQueryBuilder.should(QueryBuilders.matchQuery("title", title));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("title", title).analyzer("ik_max_word"));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 按内容检索
+
+        // 按内容检索  在这里加上ik分词器   ik_max_word中文最大粒度
+        //ik_max_word：这个模式会尽可能地将文本进行细粒度的切分，生成更多的词语。它会对文本进行多次切分，得到更细的分词结果，比如在切分某些复合词时，会尝试将其切成更多的子词。
+        // 例如，“电影推荐”会被分成“电影”和“推荐”，也可能会分出“电影推荐”作为一个整体。
+        //
+        //ik_smart：这个模式会根据文本的实际含义进行相对较少的分词，生成较少的分词结果。它优先选取最具语义的分词结果，而不会切割得过细。
+        // 例如，“电影推荐”会被切分为“电影”和“推荐”，但不会再进一步切割成“电影推荐”这样的整体。
         if (StringUtils.isNotBlank(content)) {
-            boolQueryBuilder.should(QueryBuilders.matchQuery("content", content));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("content", content).analyzer("ik_max_word"));
             boolQueryBuilder.minimumShouldMatch(1);
         }
+
         // 排序
         SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
         if (StringUtils.isNotBlank(sortField)) {
             sortBuilder = SortBuilders.fieldSort(sortField);
             sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
         }
+
         // 分页
         PageRequest pageRequest = PageRequest.of((int) current, (int) pageSize);
+
         // 构造查询
-        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
-                .withPageable(pageRequest).withSorts(sortBuilder).build();
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQueryBuilder)
+                .withPageable(pageRequest)
+                .withSorts(sortBuilder)
+                .build();
+
+        // 将构造出来的查询条件交给 ES 去查询
         SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
         Page<Post> page = new Page<>();
+
+        // 返回的 searchHits 上有总数和查询结果
         page.setTotal(searchHits.getTotalHits());
         List<Post> resourceList = new ArrayList<>();
+
         // 查出结果后，从 db 获取最新动态数据（比如点赞数）
         if (searchHits.hasSearchHits()) {
             List<SearchHit<PostEsDTO>> searchHitList = searchHits.getSearchHits();
@@ -222,6 +351,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         page.setRecords(resourceList);
         return page;
     }
+
 
     @Override
     public PostVO getPostVO(Post post, HttpServletRequest request) {
